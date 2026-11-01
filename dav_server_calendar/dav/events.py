@@ -11,6 +11,7 @@ import vobject
 
 from odoo import fields
 from odoo.tools import html2plaintext, plaintext2html
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import (
     CalendarCollection, check_text, extra_lines_of, from_naive_utc, to_utc_naive,
@@ -27,10 +28,13 @@ CLASS = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL
 CLASS_REV = {v: k for k, v in CLASS.items()}
 
 
+_lt = LazyTranslate(__name__)
+
+
 class EventCalendar(CalendarCollection):
     model = 'calendar.event'
     component = 'VEVENT'
-    display = 'Calendar'
+    display = _lt('Calendar')
 
     def scope_domain(self):
         limit = fields.Datetime.now() - datetime.timedelta(days=PAST_WINDOW_DAYS)

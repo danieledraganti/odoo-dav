@@ -9,6 +9,7 @@ import vobject
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import plaintext2html, html2plaintext
+from odoo.tools.translate import LazyTranslate
 
 from . import vcard, xml
 from .resource import NOT_FOUND, DavError, Resource
@@ -16,6 +17,7 @@ from .xml import q
 
 _logger = logging.getLogger(__name__)
 
+_lt = LazyTranslate(__name__)
 A = lambda n: q('A', n)  # noqa: E731
 D = lambda n: q('D', n)  # noqa: E731
 CS = lambda n: q('CS', n)  # noqa: E731
@@ -105,7 +107,7 @@ class AddressBook(Resource):
 
     # ----------------------------------------------------------- properties
     def display_name(self):
-        return 'Contacts'
+        return self.tr(_lt('Contacts'))
 
     def resource_types(self):
         return [xml.el(D('collection')), xml.el(A('addressbook'))]
@@ -123,7 +125,7 @@ class AddressBook(Resource):
         if name == A('max-resource-size'):
             return str(vcard.MAX_VCARD_BYTES)
         if name == A('addressbook-description'):
-            return 'Odoo contacts'
+            return self.tr(_lt('Odoo contacts'))
         return super().prop(name)
 
     def _ctag(self):

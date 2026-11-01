@@ -9,6 +9,10 @@ PREFIX = '/dav'
 class DavContext:
 
     def __init__(self, env):
+        # everything the client sees (names, descriptions, categories...) is in the user's language
+        lang = env.user.lang
+        if lang and env.context.get('lang') != lang:
+            env = env(context=dict(env.context, lang=lang))
         self.env = env
         self.user = env.user
         self.login = env.user.login
@@ -68,6 +72,19 @@ class DavContext:
     def features_header(self):
         self.root  # noqa: B018  (make sure features are computed)
         return ', '.join(['1', '3'] + sorted(self.features))
+
+    def canonical_segments(self, segments):
+        """`segments` with the fixed (structural) names spelled as in the tree, ignoring case."""
+        node, out = self.root, []
+        for index, seg in enumerate(segments):
+            if not isinstance(node, VirtualCollection):
+                return out + list(segments[index:])
+            name = node.canonical_name(seg)
+            out.append(name)
+            node = node.get_child(name)
+            if node is None:
+                return out + list(segments[index + 1:])
+        return out
 
     def has_path(self, *path):
         return self.resolve(path) is not None

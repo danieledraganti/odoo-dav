@@ -53,6 +53,10 @@ class Resource:
         return self.path[-1] if self.path else ''
 
     # ---------------------------------------------------------- properties
+    def tr(self, text):
+        """Translate `text` (a plain or lazy string) into the user's language."""
+        return self.ctx.env._(text)
+
     def display_name(self):
         return self.name
 
@@ -172,3 +176,10 @@ class VirtualCollection(Resource):
 
     def get_child(self, name):
         return self._children.get(name)
+
+    def canonical_name(self, name):
+        """The child key matching `name` ignoring case (or `name` itself)."""
+        if name in self._children:
+            return name
+        folded = name.casefold()
+        return next((key for key in self._children if key.casefold() == folded), name)

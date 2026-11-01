@@ -6,4 +6,4 @@ class DavProvider(models.AbstractModel):
 
     def _dav_mounts(self, ctx):
         from ..dav.articles import KnowledgeRoot
-        return super()._dav_mounts(ctx) + [KnowledgeRoot(ctx, ('knowledge',))]
+        return super()._dav_mounts(ctx) + [KnowledgeRoot(ctx, ('Knowledge',))]

@@ -1,12 +1,17 @@
 """Read-only folder with the PDF of the posted customer invoices and credit notes the user can see."""
+from odoo.tools.translate import LazyTranslate
+
 from odoo.addons.dav_server.dav.files import RecordFolder
 
 REPORT = 'account.account_invoices'
 
 
+_lt = LazyTranslate(__name__)
+
+
 class InvoiceFolder(RecordFolder):
     model = 'account.move'
-    display = 'Customer invoices'
+    display = _lt('Customer invoices')
 
     def scope_domain(self):
         return [('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '=', 'posted'),

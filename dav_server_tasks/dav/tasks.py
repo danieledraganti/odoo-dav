@@ -5,6 +5,7 @@ import vobject
 
 from odoo import fields
 from odoo.tools import html2plaintext, plaintext2html
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import (
     CalendarCollection, check_text, extra_lines_of, from_naive_utc, to_utc_naive,
@@ -17,10 +18,13 @@ HANDLED = {'UID', 'DTSTAMP', 'CREATED', 'LAST-MODIFIED', 'SUMMARY', 'DESCRIPTION
 CLOSED_WINDOW_DAYS = 90
 
 
+_lt = LazyTranslate(__name__)
+
+
 class TaskCalendar(CalendarCollection):
     model = 'project.task'
     component = 'VTODO'
-    display = 'Tasks'
+    display = _lt('Tasks')
 
     def scope_domain(self):
         limit = fields.Datetime.now() - datetime.timedelta(days=CLOSED_WINDOW_DAYS)

@@ -202,6 +202,19 @@ class TestCardDav(DavCase):
             res = self.dav('GET', url, login='dav_manager', headers=hdr)
             self.assertEqual((res.status_code, res.content), (200, full.content), hdr)
 
+    def test_collection_names_follow_the_user_language(self):
+        path = '/dav/addressbooks/dav_manager/contacts/'
+        self.assertEqual(self.displayname(path, 'dav_manager'), 'Contacts')
+        self.use_language(self.dav_manager, 'it_IT')
+        self.assertEqual(self.displayname(path, 'dav_manager'), 'Contatti')
+        self.assertEqual(self.displayname('/dav/addressbooks/dav_user/contacts/'), 'Contacts')  # another user, another language
+
+    def test_wrong_case_redirects_to_the_real_spelling(self):
+        res = self.dav('PROPFIND', '/dav/Addressbooks/dav_manager/Contacts/', login='dav_manager',
+                       headers={'Depth': '0'})
+        self.assertEqual(res.status_code, 308)
+        self.assertEqual(res.headers['Location'], '/dav/addressbooks/dav_manager/contacts/')
+
     def test_multiget_returns_only_requested(self):
         self._put('one.vcf')
         self._put('two.vcf', headers={})

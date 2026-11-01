@@ -4,7 +4,7 @@ from odoo.tests import tagged
 
 from odoo.addons.dav_server.tests.common import DavCase
 
-FOLDER = '/dav/reports/sale-orders/'
+FOLDER = '/dav/Reports/Sales/'
 LOGIN = 'dav_manager'
 
 

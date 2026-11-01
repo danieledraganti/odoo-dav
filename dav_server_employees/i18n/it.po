@@ -1,0 +1,21 @@
+# Italian translation of dav_server_employees.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: dav_server_employees
+#. odoo-python
+#: code:addons/dav_server_employees/dav/employees.py:0
+msgid "Employees"
+msgstr "Dipendenti"
+
+#. module: dav_server_employees
+#. odoo-python
+#: code:addons/dav_server_employees/dav/employees.py:0
+msgid "Odoo employees"
+msgstr "Dipendenti Odoo"

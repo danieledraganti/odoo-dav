@@ -53,7 +53,7 @@ class RecordFolder(Resource):
         return '%s [%d].%s' % (label or 'document', record.id, self.extension)
 
     def display_name(self):
-        return self.display
+        return self.tr(self.display)
 
     def children(self):
         limit = self.ctx.param_int('max_reports', 5000)

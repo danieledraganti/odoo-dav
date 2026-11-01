@@ -135,7 +135,7 @@ class CalendarCollection(Resource):
         return self.ctx.env
 
     def display_name(self):
-        return self.display
+        return self.tr(self.display)
 
     def resource_types(self):
         return [xml.el(D('collection')), xml.el(C('calendar'))]
@@ -155,7 +155,7 @@ class CalendarCollection(Resource):
         if name == C('max-resource-size'):
             return str(MAX_ICS_BYTES)
         if name == C('calendar-description'):
-            return self.display
+            return self.tr(self.display)
         return super().prop(name)
 
     def _has_active(self):

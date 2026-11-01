@@ -4,16 +4,20 @@ import datetime
 import vobject
 
 from odoo import fields
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import CalendarCollection, from_naive_utc
 
 CLOSED_WINDOW_DAYS = 90
 
 
+_lt = LazyTranslate(__name__)
+
+
 class MilestoneCalendar(CalendarCollection):
     model = 'project.milestone'
     component = 'VEVENT'
-    display = 'Milestones'
+    display = _lt('Milestones')
     read_only = True
     track_scope_exit = True
 

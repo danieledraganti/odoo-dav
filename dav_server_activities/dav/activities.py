@@ -9,6 +9,7 @@ import datetime
 import vobject
 
 from odoo.tools import html2plaintext, plaintext2html
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import (
     CalendarCollection, check_text, from_naive_utc,
@@ -19,10 +20,13 @@ HANDLED = {'UID', 'DTSTAMP', 'CREATED', 'LAST-MODIFIED', 'SUMMARY', 'DESCRIPTION
            'DUE', 'URL', 'CATEGORIES', 'PERCENT-COMPLETE', 'COMPLETED', 'PRIORITY'}
 
 
+_lt = LazyTranslate(__name__)
+
+
 class ActivityCalendar(CalendarCollection):
     model = 'mail.activity'
     component = 'VTODO'
-    display = 'Activities'
+    display = _lt('Activities')
 
     def scope_domain(self):
         return [('user_id', '=', self.ctx.user.id)]
