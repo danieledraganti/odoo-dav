@@ -1,5 +1,6 @@
 """CalDAV VTODO view of the project.task records assigned to the user."""
 import datetime
+import re
 
 import vobject
 
@@ -25,6 +26,7 @@ class TaskCalendar(CalendarCollection):
     model = 'project.task'
     component = 'VTODO'
     display = _lt('Tasks')
+    token_epoch = '2'  # 2: tasks carry a URL back to Odoo
 
     def scope_domain(self):
         limit = fields.Datetime.now() - datetime.timedelta(days=CLOSED_WINDOW_DAYS)
@@ -32,7 +34,7 @@ class TaskCalendar(CalendarCollection):
                 '|', ('state', 'not in', CLOSED), ('write_date', '>', limit)]
 
     def etag_parts(self, task):
-        return (task.id, task.write_date, task.project_id.name,
+        return (task.id, task.write_date, task.project_id.name, self.ctx.record_url('project.task', task.id),
                 ','.join(sorted(task.tag_ids.mapped('name'))))
 
     # ------------------------------------------------------------------ build
@@ -64,8 +66,11 @@ class TaskCalendar(CalendarCollection):
             todo.add('categories').value = tags
         if task.project_id:
             todo.add('x-odoo-project').value = task.project_id.name
-        text = cal.serialize()
         extra = (mapping.extra_lines if mapping else '') or ''
+        url = self.ctx.record_url('project.task', task.id)
+        if url and not re.search(r'^URL[:;]', extra, re.M):  # a link set by the client wins
+            todo.add('url').value = url
+        text = cal.serialize()
         if extra:
             text = text.replace('END:VTODO', extra + 'END:VTODO', 1)
         return text

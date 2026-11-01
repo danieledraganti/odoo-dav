@@ -27,23 +27,18 @@ class ActivityCalendar(CalendarCollection):
     model = 'mail.activity'
     component = 'VTODO'
     display = _lt('Activities')
+    token_epoch = '2'  # 2: activities carry a URL to their document
 
     def scope_domain(self):
         return [('user_id', '=', self.ctx.user.id)]
 
     def etag_parts(self, activity):
-        return (activity.id, activity.write_date, activity.date_deadline)
+        return (activity.id, activity.write_date, activity.date_deadline,
+                self.ctx.record_url(activity.res_model, activity.res_id))
 
     def _title(self, activity):
         summary = activity.summary or activity.activity_type_id.name or 'Activity'
         return '%s: %s' % (activity.res_name, summary) if activity.res_name else summary
-
-    def _url(self, activity):
-        base = (self.ctx.param('web_base_url') or
-                self.env['ir.config_parameter'].sudo().get_param('web.base.url') or '').rstrip('/')
-        if not (base and activity.res_model and activity.res_id):
-            return ''
-        return '%s/odoo/%s/%d' % (base, activity.res_model, activity.res_id)
 
     def build_ics(self, activity, mapping):
         uid = mapping.uid if mapping and mapping.uid else 'odoo-activity-%s-%d' % (self.ctx.db_uuid, activity.id)
@@ -62,7 +57,7 @@ class ActivityCalendar(CalendarCollection):
             todo.add('due').value = activity.date_deadline
         if activity.activity_type_id:
             todo.add('categories').value = [activity.activity_type_id.name]
-        url = self._url(activity)
+        url = self.ctx.record_url(activity.res_model, activity.res_id)  # the document, not the activity
         if url:
             todo.add('url').value = url
         text = cal.serialize()

@@ -100,6 +100,9 @@ class CalendarCollection(Resource):
     display = 'Calendar'
     max_items = 20000
     read_only = False       # True: the collection can never be written through DAV
+    #: bump when the way records are rendered changes: clients then drop their sync state and
+    #: download everything again (etags alone are not looked at when the sync token is unchanged)
+    token_epoch = ''
     #: report records that stop matching `scope_domain()` as gone in sync-collection
     #: (state changes, cancellations); needed when the scope depends on mutable fields
     track_scope_exit = False
@@ -240,7 +243,8 @@ class CalendarCollection(Resource):
         Model = self.env[self.model]
         last = Model.with_context(active_test=False).search(
             self.scope_domain(), order='write_date desc', limit=1)
-        return vcard.etag_of(Model.search_count(self._domain()), last.write_date, self._current_token())
+        return vcard.etag_of(Model.search_count(self._domain()), last.write_date, self._current_token(),
+                             self.token_epoch)
 
     def _clamp(self, since, latest):
         ceiling = fields.Datetime.now() - SYNC_LAG
@@ -281,14 +285,14 @@ class CalendarCollection(Resource):
             [('model', '=', self.model)] + self.env['dav.deletion']._visible_domain(),
             order='deleted_at desc', limit=1).deleted_at
         latest = max([d for d in (last, tomb) if d], default=None)
-        return make_token(self._clamp(None, latest))
+        return make_token(self._clamp(None, latest), self.token_epoch)
 
     def sync(self, token):
-        since = parse_token(token)
+        since = parse_token(token, self.token_epoch)
         changed, gone, latest = self._changes(since)
         self._maps(changed)
         hrefs = [self.href + quote(n, safe='@') for n in gone]
-        return [self._item(r) for r in changed], hrefs, make_token(self._clamp(since, latest))
+        return [self._item(r) for r in changed], hrefs, make_token(self._clamp(since, latest), self.token_epoch)
 
 
 class CalendarObject(Resource):

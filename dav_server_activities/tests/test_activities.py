@@ -11,7 +11,7 @@ class TestActivities(DavCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        partner = cls.env['res.partner'].create({'name': 'Acme'})
+        cls.partner = partner = cls.env['res.partner'].create({'name': 'Acme'})
         todo = cls.env.ref('mail.mail_activity_data_todo')
 
         def activity(user, summary):
@@ -35,7 +35,7 @@ class TestActivities(DavCase):
         res = self.dav('GET', self._url(self.mine), login='dav_manager')
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'SUMMARY:Acme: Call back', res.content)
-        self.assertIn(b'/odoo/res.partner/', res.content)
+        self.assertIn(b'/odoo/res.partner/%d' % self.partner.id, res.content)
 
     def test_edit_summary_and_due(self):
         res = self.dav('PUT', self._url(self.mine), login='dav_manager', body=(
