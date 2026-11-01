@@ -100,6 +100,36 @@ class DavController(http.Controller):
         return data
 
     @staticmethod
+    def _byte_range(size, etag):
+        """(first, last) of the single byte range requested, or None to send the whole body.
+
+        Finder, Preview and Quick Look read remote files in ranges. Multiple ranges and
+        malformed headers are ignored (the whole body is sent, as the RFC allows).
+        """
+        headers = request.httprequest.headers
+        spec = (headers.get('Range') or '').strip()
+        if_range = (headers.get('If-Range') or '').strip()
+        if not spec.lower().startswith('bytes=') or ',' in spec:
+            return None
+        if if_range and if_range.strip('"') != etag:
+            return None
+        first, _dash, last = spec[6:].strip().partition('-')
+        try:
+            if first == '':  # suffix: the last N bytes
+                length = int(last)
+                if length <= 0:
+                    raise ValueError
+                start, end = max(size - length, 0), size - 1
+            else:
+                start = int(first)
+                end = min(int(last), size - 1) if last else size - 1
+        except ValueError:
+            return None
+        if start >= size or start > end:
+            raise DavError(416, 'Range not satisfiable')
+        return start, end
+
+    @staticmethod
     def _multistatus(body):
         return request.make_response(
             body, headers=[('Content-Type', 'application/xml; charset=utf-8')], status=207)
@@ -154,14 +184,22 @@ class DavController(http.Controller):
             if resource.is_collection:
                 raise DavError(405, 'Collections cannot be fetched')
             data, ctype = resource.read()
-            headers = [('Content-Type', ctype), ('Content-Length', str(len(data)))]
-            if resource.etag():
-                headers.append(('ETag', '"%s"' % resource.etag()))
+            headers = [('Content-Type', ctype), ('Accept-Ranges', 'bytes')]
+            etag = resource.etag()
+            if etag:
+                headers.append(('ETag', '"%s"' % etag))
             modified = resource.prop(q('D', 'getlastmodified'))
             if isinstance(modified, str):
                 headers.append(('Last-Modified', modified))
             headers.append(('Content-Disposition', 'attachment'))
-            return request.make_response(data, headers=headers)
+            span = self._byte_range(len(data), etag)
+            if span is None:
+                headers.append(('Content-Length', str(len(data))))
+                return request.make_response(data, headers=headers)
+            start, end = span
+            headers += [('Content-Length', str(end - start + 1)),
+                        ('Content-Range', 'bytes %d-%d/%d' % (start, end, len(data)))]
+            return request.make_response(data[start:end + 1], headers=headers, status=206)
 
         if method == 'PROPPATCH':
             if resource is None:

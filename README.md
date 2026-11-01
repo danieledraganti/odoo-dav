@@ -47,7 +47,7 @@ Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 - Employees: visibility follows the *Employee directory* (`hr.employee.public`); only the work fields are read from the employee record (name, work e-mail/phones, job title, company, department, photo).
 
 ## Known gaps
-`*-query` filters are not evaluated (full list returned), no `Range`, `COPY`, `If:` header, PROPPATCH (always 403), custom-field (`x_*`/Properties) mapping to vCard `X-` props, tag editing over DAV.
+`*-query` filters are not evaluated (full list returned), `Range` on GET is limited to a single byte range, no `COPY`, `If:` header, PROPPATCH (always 403), custom-field (`x_*`/Properties) mapping to vCard `X-` props, tag editing over DAV.
 
 ## Status
 Written against the Odoo 19 source but **not yet executed**: no running Odoo was available. Run `odoo -i dav_server,... --test-tags /dav_server`.
