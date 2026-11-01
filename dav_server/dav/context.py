@@ -19,6 +19,10 @@ class DavContext:
         self._icp = env['ir.config_parameter'].sudo()
         self.db_uuid = self._icp.get_param('database.uuid') or 'odoo'
 
+    def can_read(self, model):
+        """Whether the user may read `model` at all (optional collections are hidden otherwise)."""
+        return model in self.env and self.env[model].has_access('read')
+
     # ------------------------------------------------------------ settings
     def param(self, key, default=None):
         value = self._icp.get_param('dav_server.' + key)

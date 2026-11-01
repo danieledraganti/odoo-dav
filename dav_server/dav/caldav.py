@@ -99,6 +99,14 @@ class CalendarCollection(Resource):
     component = None        # 'VTODO' | 'VEVENT'
     display = 'Calendar'
     max_items = 20000
+    read_only = False       # True: the collection can never be written through DAV
+    #: report records that stop matching `scope_domain()` as gone in sync-collection
+    #: (state changes, cancellations); needed when the scope depends on mutable fields
+    track_scope_exit = False
+
+    @property
+    def writable(self):
+        return not self.read_only
 
     # ----------------------------------------------- to implement in children
     def scope_domain(self):
@@ -150,8 +158,11 @@ class CalendarCollection(Resource):
             return self.display
         return super().prop(name)
 
+    def _has_active(self):
+        return 'active' in self.env[self.model]._fields
+
     def _domain(self):
-        return [('active', '=', True)] + self.scope_domain()
+        return ([('active', '=', True)] if self._has_active() else []) + self.scope_domain()
 
     # --------------------------------------------------------------- mapping
     def _maps(self, records):
@@ -207,6 +218,8 @@ class CalendarCollection(Resource):
 
     # ---------------------------------------------------------------- writing
     def create_child(self, name, data, content_type, request_info):
+        if self.read_only:
+            raise DavError(403, 'Read-only calendar')
         if not _NAME_RE.match(name):
             raise DavError(403, 'Invalid resource name', (C('valid-calendar-object-resource'),))
         _cal, comp = parse_ics(data, self.component)
@@ -241,9 +254,14 @@ class CalendarCollection(Resource):
         base = [('write_date', '>', since)] if since else []
         changed = Model.search(self._domain() + base, order='id')
         gone, seen = [], [changed.mapped('write_date')]
-        if since:
-            archived = Model.with_context(active_test=False).search(
-                [('active', '=', False)] + self.scope_domain() + base)
+        if since and since > datetime.datetime(1970, 1, 2):  # not an initial sync
+            archived = Model.browse()
+            if self._has_active():
+                archived = Model.with_context(active_test=False).search(
+                    [('active', '=', False)] + self.scope_domain() + base)
+            if self.track_scope_exit:
+                touched = Model.with_context(active_test=False).search(base)
+                archived |= touched - changed
             names = {m.res_id: m.resource_name for m in self.env['dav.resource.name'].sudo().search(
                 [('model', '=', self.model), ('res_id', 'in', archived.ids)])}
             gone += [names.get(r.id) or '%d.ics' % r.id for r in archived]
@@ -274,7 +292,10 @@ class CalendarCollection(Resource):
 
 
 class CalendarObject(Resource):
-    writable = True
+
+    @property
+    def writable(self):
+        return self.collection.writable
 
     def __init__(self, ctx, path, record, mapping, collection):
         super().__init__(ctx, path)
@@ -307,11 +328,15 @@ class CalendarObject(Resource):
         return self._render().encode('utf-8'), self.content_type()
 
     def put(self, data, content_type, request_info):
+        if self.collection.read_only:
+            raise DavError(403, 'Read-only calendar')
         _cal, comp = parse_ics(data, self.collection.component)
         try:
             _rec, extra = self.collection.apply_ics(self.record, comp, self.mapping)
         except (AccessError, UserError, ValidationError) as exc:
             raise DavError(403, str(exc))
+        if not self.record.exists() or not getattr(self.record, 'active', True):
+            return  # the edit consumed the record (e.g. an activity marked done)
         Map = self.ctx.env['dav.resource.name'].sudo()
         uid = str(comp.contents['uid'][0].value)[:255] if 'uid' in comp.contents else None
         vals = {'extra_lines': extra or False, 'uid': uid}
@@ -326,6 +351,8 @@ class CalendarObject(Resource):
         self.ctx.__dict__.get('_dav_maps', {}).pop(self.collection.model, None)
 
     def delete(self):
+        if self.collection.read_only:
+            raise DavError(403, 'Read-only calendar')
         try:
             self.collection.archive(self.record)
         except (AccessError, UserError, ValidationError) as exc:

@@ -49,3 +49,13 @@ class DavCase(HttpCase):
             body = body.encode()
         return self.opener.request(method, self.base_url() + path, data=body, headers=hdrs,
                                    allow_redirects=False, timeout=30)
+
+    # ------------------------------------------------------------ helpers
+    def sync_report(self, path, login='dav_user', token='urn:odoo-dav:sync:0'):
+        body = ('<?xml version="1.0"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>%s</D:sync-token>'
+                '<D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>' % token)
+        return self.dav('REPORT', path, login=login, body=body)
+
+    def list_collection(self, path, login='dav_user'):
+        return self.dav('PROPFIND', path, login=login, headers={'Depth': '1'},
+                        body='<?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:getetag/></D:prop></D:propfind>')

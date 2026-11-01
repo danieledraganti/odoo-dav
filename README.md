@@ -6,9 +6,15 @@ CardDAV / WebDAV / CalDAV access to Odoo, authenticated with standard Odoo API k
 |---|---|---|---|
 | `dav_server` | `contacts` (Community) | auth, DAV engine, **contacts** (CardDAV, vCard 3.0, photos) | yes |
 | `dav_server_documents` | `documents` (Enterprise) | Documents as files/folders (WebDAV) | yes |
-| `dav_server_tasks` | `project` | tasks assigned to the user (CalDAV VTODO) | yes |
+| `dav_server_tasks` | `project` | tasks assigned to the user (CalDAV VTODO, includes personal to-dos of `project_todo`) and project milestones (VEVENT) | tasks yes, milestones no |
 | `dav_server_knowledge` | `knowledge` (Enterprise) | articles as HTML files | **no, ever** |
-| `dav_server_calendar` | `calendar` | events (CalDAV VEVENT) | non-recurring, organiser only |
+| `dav_server_calendar` | `calendar` | events (CalDAV VEVENT; interviews and meetings are plain events) | non-recurring, organiser only |
+| `dav_server_timeoff` | `hr_holidays` | time off (VEVENT) | **no, ever** |
+| `dav_server_event` | `event` | Odoo events you run or are registered to (VEVENT) | **no, ever** |
+| `dav_server_activities` | `mail` | activities assigned to you: to-dos, calls, CRM follow-ups (VTODO) | edit, complete, cancel; no create |
+| `dav_server_sales` | `sale` | PDF of quotations and orders (WebDAV files) | **no, ever** |
+| `dav_server_invoices` | `account` | PDF of posted customer invoices and credit notes (WebDAV files) | **no, ever** |
+| `dav_server_employees` | `hr` | employee directory with work contact data (second CardDAV address book) | **no, ever** |
 
 Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 
@@ -21,7 +27,7 @@ Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 - Hardened XML parsing (no DTD/entities), `Depth: infinity` refused, body-size caps, path normalisation, `nosniff`/CSP headers, write audit log (`odoo.addons.dav_server.audit`).
 
 ## URLs
-`/.well-known/carddav|caldav|webdav` → `/dav/`. Principal `/dav/principals/<login>/`, address book `/dav/addressbooks/<login>/contacts/`, calendars `/dav/calendars/<login>/{tasks,events}/`, files `/dav/files/`, knowledge `/dav/knowledge/`.
+`/.well-known/carddav|caldav|webdav` → `/dav/`. Principal `/dav/principals/<login>/`, address books `/dav/addressbooks/<login>/{contacts,employees}/`, calendars `/dav/calendars/<login>/{tasks,milestones,events,timeoff,odoo-events,activities}/`, files `/dav/files/`, knowledge `/dav/knowledge/`, PDFs `/dav/reports/{sale-orders,invoices}/`. A collection is only mounted when the user may read its model.
 
 ## Data-integrity rules (contacts)
 - Companies, and non-`contact` addresses, are read-only; DELETE = archive (refused for users' partners and partners with children).
@@ -33,6 +39,12 @@ Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 - Documents: DELETE = Odoo trash; moves stay inside the same area (Company / My Files / Shared); sibling-name clashes get ` (id)`; OS litter (`.DS_Store`, `._*`, `~$*`...) is discarded; `lock_uid` held by someone else → 423; LOCK is a stateless courtesy lock (needed by Finder/Office).
 - Tasks: VTODO of tasks where the user is assignee (open + closed in the last 90 days); new VTODOs become personal tasks; only done/cancelled ↔ open transitions are written to `state`.
 - Calendar: recurring events are exposed as plain occurrences and are read-only; attendees are never changed; creation sends no invitations.
+
+## Read-only feeds and activities
+- Time off, Odoo events and milestones are read-only feeds; records that leave the feed (refused leave, cancelled, deleted) are reported as gone by `sync-collection`. In the time-off feed the leave type is only shown to the person concerned and to time-off officers.
+- Activities: editing the summary, note and due date is written back; `STATUS:COMPLETED` marks the activity done (Odoo archives it); DELETE cancels it. Activities reassigned to someone else disappear at the next full resync.
+- PDF folders: files are named `<number> [<id>].pdf`; the PDF is rendered on download (sale orders) or the stored one is served (posted invoices). Window and cap: `dav_server.reports_window_days` (365), `dav_server.max_reports` (5000).
+- Employees: visibility follows the *Employee directory* (`hr.employee.public`); only the work fields are read from the employee record (name, work e-mail/phones, job title, company, department, photo).
 
 ## Known gaps
 `*-query` filters are not evaluated (full list returned), no `Range`, `COPY`, `If:` header, PROPPATCH (always 403), custom-field (`x_*`/Properties) mapping to vCard `X-` props, tag editing over DAV.

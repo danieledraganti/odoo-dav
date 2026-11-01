@@ -33,7 +33,7 @@ jobs:
             --entrypoint odoo odoo:19.0 \
             --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons \
             --db_host 127.0.0.1 --db_user odoo --db_password odoo \
-            -d test -i dav_server,dav_server_tasks,dav_server_calendar \
-            --test-tags /dav_server,/dav_server_tasks,/dav_server_calendar \
+            -d test -i dav_server,dav_server_tasks,dav_server_calendar,dav_server_timeoff,dav_server_event,dav_server_activities,dav_server_sales,dav_server_invoices,dav_server_employees \
+            --test-tags /dav_server,/dav_server_tasks,/dav_server_calendar,/dav_server_timeoff,/dav_server_event,/dav_server_activities,/dav_server_sales,/dav_server_invoices,/dav_server_employees \
             --stop-after-init --log-level=test --no-http 2>&1 | tee odoo.log
           ! grep -E "(ERROR|CRITICAL) test|FAIL:|Traceback" odoo.log
