@@ -173,6 +173,35 @@ class TestCardDav(DavCase):
         self.assertNotIn(b'secret.vcf', res.content)
         self.assertIn(b'public.vcf', res.content)
 
+    def test_range_requests(self):
+        self._put('r.vcf')
+        url = self.BOOK + 'r.vcf'
+        full = self.dav('GET', url, login='dav_manager')
+        self.assertEqual(full.headers['Accept-Ranges'], 'bytes')
+        size = len(full.content)
+
+        res = self.dav('GET', url, login='dav_manager', headers={'Range': 'bytes=0-9'})
+        self.assertEqual(res.status_code, 206)
+        self.assertEqual(res.content, full.content[:10])
+        self.assertEqual(res.headers['Content-Range'], 'bytes 0-9/%d' % size)
+        self.assertEqual(res.headers['Content-Length'], '10')
+
+        res = self.dav('GET', url, login='dav_manager', headers={'Range': 'bytes=5-'})
+        self.assertEqual(res.content, full.content[5:])
+        res = self.dav('GET', url, login='dav_manager', headers={'Range': 'bytes=-7'})
+        self.assertEqual(res.content, full.content[-7:])
+        res = self.dav('GET', url, login='dav_manager', headers={'Range': 'bytes=0-999999'})
+        self.assertEqual(res.status_code, 206)
+        self.assertEqual(res.content, full.content)
+
+        res = self.dav('GET', url, login='dav_manager', headers={'Range': 'bytes=%d-' % size})
+        self.assertEqual(res.status_code, 416)
+        # unsupported / malformed / stale If-Range: the whole body, as the RFC allows
+        for hdr in ({'Range': 'bytes=0-1,5-6'}, {'Range': 'bytes=abc'}, {'Range': 'lines=1-2'},
+                    {'Range': 'bytes=0-1', 'If-Range': '"stale"'}):
+            res = self.dav('GET', url, login='dav_manager', headers=hdr)
+            self.assertEqual((res.status_code, res.content), (200, full.content), hdr)
+
     def test_multiget_returns_only_requested(self):
         self._put('one.vcf')
         self._put('two.vcf', headers={})
