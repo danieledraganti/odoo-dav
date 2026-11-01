@@ -36,17 +36,22 @@ def _from_micro(value):
     return datetime.datetime(1970, 1, 1) + datetime.timedelta(microseconds=value)
 
 
-def make_token(dt):
-    return '%s%d' % (TOKEN_PREFIX, _to_micro(dt))
+def make_token(dt, epoch=''):
+    """`epoch` names the rendering of a collection: bumping it makes every older token invalid,
+    so clients start over and re-download everything (e.g. after a new property was added)."""
+    return '%s%s%d' % (TOKEN_PREFIX, epoch + '.' if epoch else '', _to_micro(dt))
 
 
-def parse_token(token):
+def parse_token(token, epoch=''):
     if not token:
         return None
-    if not token.startswith(TOKEN_PREFIX):
+    prefix = TOKEN_PREFIX + (epoch + '.' if epoch else '')
+    if token == TOKEN_PREFIX + '0':  # "from the beginning", whatever the epoch
+        return _from_micro(0)
+    if not token.startswith(prefix):
         raise DavError(403, 'Invalid sync token', (D('valid-sync-token'),))
     try:
-        return _from_micro(int(token[len(TOKEN_PREFIX):]))
+        return _from_micro(int(token[len(prefix):]))
     except (ValueError, OverflowError):
         raise DavError(403, 'Invalid sync token', (D('valid-sync-token'),))
 

@@ -23,6 +23,11 @@ class DavContext:
         self._icp = env['ir.config_parameter'].sudo()
         self.db_uuid = self._icp.get_param('database.uuid') or 'odoo'
 
+    def record_url(self, model, res_id):
+        """Link that opens the record in the Odoo web client ('' when the base URL is unknown)."""
+        base = (self._icp.get_param('web.base.url') or '').rstrip('/')
+        return '%s/odoo/%s/%d' % (base, model, res_id) if base and model and res_id else ''
+
     def can_read(self, model):
         """Whether the user may read `model` at all (optional collections are hidden otherwise)."""
         return model in self.env and self.env[model].has_access('read')
