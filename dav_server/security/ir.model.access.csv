@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dav_vcard_extra_user,dav.vcard.extra user,model_dav_vcard_extra,group_dav_user,1,0,0,0
+access_dav_vcard_extra_manager,dav.vcard.extra manager,model_dav_vcard_extra,group_dav_manager,1,1,1,1
+access_dav_deletion_user,dav.deletion user,model_dav_deletion,group_dav_user,1,0,0,0
+access_dav_resource_name_user,dav.resource.name user,model_dav_resource_name,group_dav_user,1,0,0,0

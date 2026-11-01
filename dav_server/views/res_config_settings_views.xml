@@ -1,0 +1,27 @@
+<odoo>
+    <record id="res_config_settings_view_form_dav" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.dav</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="DAV" name="dav_server" logo="/dav_server/static/description/settings.svg" groups="base.group_system">
+                    <block title="DAV Server">
+                        <setting string="Allow insecure (HTTP) connections" help="API keys travel in every request: only enable for local development.">
+                            <field name="dav_allow_insecure"/>
+                        </setting>
+                        <setting string="Maximum upload size (MB)">
+                            <field name="dav_max_upload_mb"/>
+                        </setting>
+                        <setting string="Maximum contacts per address book">
+                            <field name="dav_max_contacts"/>
+                        </setting>
+                        <setting string="Include photos in vCards">
+                            <field name="dav_vcard_photos"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

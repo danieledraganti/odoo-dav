@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  odoo:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U odoo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Odoo tests
+        run: |
+          docker run --rm --network host -u root \
+            -v "$GITHUB_WORKSPACE:/mnt/extra-addons:ro" \
+            --entrypoint odoo odoo:19.0 \
+            --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons \
+            --db_host 127.0.0.1 --db_user odoo --db_password odoo \
+            -d test -i dav_server,dav_server_tasks,dav_server_calendar \
+            --test-tags /dav_server,/dav_server_tasks,/dav_server_calendar \
+            --stop-after-init --log-level=test --no-http 2>&1 | tee odoo.log
+          ! grep -E "(ERROR|CRITICAL) test|FAIL:|Traceback" odoo.log
