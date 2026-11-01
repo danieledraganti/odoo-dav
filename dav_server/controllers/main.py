@@ -1,6 +1,6 @@
 import logging
 import uuid
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 from odoo import http
 from odoo.exceptions import AccessError, MissingError, UserError, ValidationError
@@ -153,6 +153,15 @@ class DavController(http.Controller):
         if method in WRITE_METHODS and not ctx.can_write:
             raise DavError(403, 'Read-only DAV access')
         segments = self._segments(path)
+        canonical = ctx.canonical_segments(segments)
+        if canonical != segments:
+            # e.g. the former lowercase /dav/files/: send clients to the real spelling
+            url = ctx.prefix + ''.join('/' + quote(seg, safe='@') for seg in canonical)
+            if request.httprequest.path.endswith('/'):
+                url += '/'
+            if request.httprequest.query_string:
+                url += '?' + request.httprequest.query_string.decode()
+            return request.redirect(url, code=308, local=True)
         resource = ctx.resolve(segments)
         dav_header = ('DAV', ctx.features_header)
 

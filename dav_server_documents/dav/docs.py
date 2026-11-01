@@ -6,6 +6,8 @@ import re
 
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from odoo.tools.translate import LazyTranslate
+
 from odoo.addons.dav_server.dav import xml
 from odoo.addons.dav_server.dav.resource import NOT_FOUND, DavError, Resource
 from odoo.addons.dav_server.dav.xml import q
@@ -47,6 +49,9 @@ def dav_errors(func):
         except (AccessError, UserError, ValidationError) as exc:
             raise DavError(403, str(exc))
     return wrapper
+
+
+_lt = LazyTranslate(__name__)
 
 
 class DocsCollection(Resource):
@@ -130,7 +135,7 @@ class DocsRoot(Resource):
     is_collection = True
 
     def display_name(self):
-        return 'Documents'
+        return self.tr(_lt('Documents'))
 
     def children(self):
         return [self._area(label, scope) for label, scope in AREAS]

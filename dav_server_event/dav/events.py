@@ -5,16 +5,20 @@ import vobject
 
 from odoo import fields
 from odoo.tools import html2plaintext
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import CalendarCollection, from_naive_utc
 
 PAST_WINDOW_DAYS = 180
 
 
+_lt = LazyTranslate(__name__)
+
+
 class EventsCalendar(CalendarCollection):
     model = 'event.event'
     component = 'VEVENT'
-    display = 'Odoo Events'
+    display = _lt('Odoo Events')
     read_only = True
     track_scope_exit = True
 

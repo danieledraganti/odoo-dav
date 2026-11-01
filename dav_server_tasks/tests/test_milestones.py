@@ -19,6 +19,11 @@ class TestMilestones(DavCase):
             'deadline': datetime.date.today() + datetime.timedelta(days=10)})
         cls.no_deadline = cls.env['project.milestone'].create({'name': 'Someday', 'project_id': project.id})
 
+    def test_names_in_the_user_language(self):
+        self.use_language(self.dav_user, 'it_IT')
+        self.assertEqual(self.displayname(PATH % 'dav_user'), 'Traguardi')
+        self.assertEqual(self.displayname('/dav/calendars/dav_user/tasks/'), 'Task')
+
     def test_listed_as_all_day_event(self):
         content = self.list_collection(PATH % 'dav_user').content
         self.assertIn(b'%d.ics' % self.milestone.id, content)

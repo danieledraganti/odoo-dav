@@ -7,7 +7,7 @@ from odoo.tests import tagged
 
 from odoo.addons.dav_server.tests.common import DavCase
 
-FOLDER = '/dav/reports/invoices/'
+FOLDER = '/dav/Reports/Invoices/'
 
 
 @tagged('post_install', '-at_install')

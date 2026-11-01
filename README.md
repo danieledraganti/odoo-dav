@@ -27,7 +27,7 @@ Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 - Hardened XML parsing (no DTD/entities), `Depth: infinity` refused, body-size caps, path normalisation, `nosniff`/CSP headers, write audit log (`odoo.addons.dav_server.audit`).
 
 ## URLs
-`/.well-known/carddav|caldav|webdav` → `/dav/`. Principal `/dav/principals/<login>/`, address books `/dav/addressbooks/<login>/{contacts,employees}/`, calendars `/dav/calendars/<login>/{tasks,milestones,events,timeoff,odoo-events,activities}/`, files `/dav/files/`, knowledge `/dav/knowledge/`, PDFs `/dav/reports/{sale-orders,invoices}/`. A collection is only mounted when the user may read its model.
+`/.well-known/carddav|caldav|webdav` → `/dav/`. Principal `/dav/principals/<login>/`, address books `/dav/addressbooks/<login>/{contacts,employees}/`, calendars `/dav/calendars/<login>/{tasks,milestones,events,timeoff,odoo-events,activities}/`, files `/dav/Files/`, knowledge `/dav/Knowledge/`, PDFs `/dav/Reports/{Sales,Invoices}/`. Fixed names are matched ignoring case: a request with another spelling (e.g. the former `/dav/files/`) is redirected (308) to the real one. A collection is only mounted when the user may read its model.
 
 ## Data-integrity rules (contacts)
 - Companies, and non-`contact` addresses, are read-only; DELETE = archive (refused for users' partners and partners with children).
@@ -39,6 +39,9 @@ Python deps: `vobject`, `lxml`, `Pillow` (all already Odoo dependencies).
 - Documents: DELETE = Odoo trash; moves stay inside the same area (Company / My Files / Shared); sibling-name clashes get ` (id)`; OS litter (`.DS_Store`, `._*`, `~$*`...) is discarded; `lock_uid` held by someone else → 423; LOCK is a stateless courtesy lock (needed by Finder/Office).
 - Tasks: VTODO of tasks where the user is assignee (open + closed in the last 90 days); new VTODOs become personal tasks; only done/cancelled ↔ open transitions are written to `state`.
 - Calendar: recurring events are exposed as plain occurrences and are read-only; attendees are never changed; creation sends no invitations.
+
+## Language
+Everything the client shows (collection names, descriptions, and Odoo data such as tags, activity types and project names) is in the language of the authenticated user (*Preferences → Language*). Collection names are translated through the usual Odoo code translations: add `i18n/<lang>.po` to the addon (Italian is included). URLs never change with the language, and the folder names inside `Files/` (`Company`, `My Files`, `Shared with me`) stay as they are, because file clients such as Finder show the URL, not a display name.
 
 ## Read-only feeds and activities
 - Time off, Odoo events and milestones are read-only feeds; records that leave the feed (refused leave, cancelled, deleted) are reported as gone by `sync-collection`. In the time-off feed the leave type is only shown to the person concerned and to time-off officers.

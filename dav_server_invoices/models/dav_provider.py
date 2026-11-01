@@ -8,5 +8,5 @@ class DavProvider(models.AbstractModel):
         from ..dav.invoices import InvoiceFolder
         mounts = super()._dav_mounts(ctx)
         if ctx.can_read('account.move'):
-            mounts.append(InvoiceFolder(ctx, ('reports', 'invoices')))
+            mounts.append(InvoiceFolder(ctx, ('Reports', 'Invoices')))
         return mounts

@@ -9,6 +9,8 @@ import hashlib
 import html
 import re
 
+from odoo.tools.translate import LazyTranslate
+
 from odoo.addons.dav_server.dav.resource import DavError, Resource
 from odoo.addons.dav_server.dav.xml import q
 
@@ -26,6 +28,9 @@ def render_html(article):
     body = article.body or ''
     return ('<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>%s</title></head>'
             '<body><h1>%s</h1>\n%s\n</body></html>' % (title, title, body)).encode('utf-8')
+
+
+_lt = LazyTranslate(__name__)
 
 
 class ArticleList(Resource):
@@ -71,7 +76,7 @@ class ArticleList(Resource):
 
 class KnowledgeRoot(ArticleList):
     def display_name(self):
-        return 'Knowledge'
+        return self.tr(_lt('Knowledge'))
 
     def _parent_domain(self):
         return [('parent_id', '=', False)]

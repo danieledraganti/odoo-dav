@@ -8,5 +8,5 @@ class DavProvider(models.AbstractModel):
         from ..dav.sales import SaleOrderFolder
         mounts = super()._dav_mounts(ctx)
         if ctx.can_read('sale.order'):
-            mounts.append(SaleOrderFolder(ctx, ('reports', 'sale-orders')))
+            mounts.append(SaleOrderFolder(ctx, ('Reports', 'Sales')))
         return mounts

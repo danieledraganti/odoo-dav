@@ -4,6 +4,7 @@ import datetime
 import vobject
 
 from odoo import fields
+from odoo.tools.translate import LazyTranslate
 
 from odoo.addons.dav_server.dav.caldav import CalendarCollection, from_naive_utc
 
@@ -11,10 +12,13 @@ PAST_WINDOW_DAYS = 180
 OPEN_STATES = ('confirm', 'validate1', 'validate')
 
 
+_lt = LazyTranslate(__name__)
+
+
 class TimeOffCalendar(CalendarCollection):
     model = 'hr.leave'
     component = 'VEVENT'
-    display = 'Time Off'
+    display = _lt('Time Off')
     read_only = True
     track_scope_exit = True
 

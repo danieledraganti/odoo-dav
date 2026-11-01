@@ -56,6 +56,16 @@ class DavCase(HttpCase):
                 '<D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>' % token)
         return self.dav('REPORT', path, login=login, body=body)
 
+    def displayname(self, path, login='dav_user'):
+        res = self.dav('PROPFIND', path, login=login, headers={'Depth': '0'},
+                       body='<?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:displayname/></D:prop></D:propfind>')
+        self.assertEqual(res.status_code, 207, res.text)
+        return res.text.split('<D:displayname>')[1].split('<')[0]
+
+    def use_language(self, user, code):
+        self.env['res.lang']._activate_lang(code)
+        user.lang = code
+
     def list_collection(self, path, login='dav_user'):
         return self.dav('PROPFIND', path, login=login, headers={'Depth': '1'},
                         body='<?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:getetag/></D:prop></D:propfind>')

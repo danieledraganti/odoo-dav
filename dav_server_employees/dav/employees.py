@@ -12,6 +12,8 @@ import vobject
 
 from odoo import fields
 
+from odoo.tools.translate import LazyTranslate
+
 from odoo.addons.dav_server.dav import vcard, xml
 from odoo.addons.dav_server.dav.contacts import SYNC_LAG, make_token, parse_token
 from odoo.addons.dav_server.dav.resource import DavError, Resource
@@ -22,6 +24,9 @@ D = lambda n: q('D', n)  # noqa: E731
 CS = lambda n: q('CS', n)  # noqa: E731
 
 _ID_RE = re.compile(r'^(\d+)\.vcf$')
+
+
+_lt = LazyTranslate(__name__)
 
 
 class EmployeeBook(Resource):
@@ -40,7 +45,7 @@ class EmployeeBook(Resource):
         return candidates.filtered(lambda e: e.id in visible)
 
     def display_name(self):
-        return 'Employees'
+        return self.tr(_lt('Employees'))
 
     def resource_types(self):
         return [xml.el(D('collection')), xml.el(A('addressbook'))]
@@ -56,7 +61,7 @@ class EmployeeBook(Resource):
         if name == A('supported-address-data'):
             return xml.el(A('address-data-type'), content_type='text/vcard', version='3.0')
         if name == A('addressbook-description'):
-            return 'Odoo employees'
+            return self.tr(_lt('Odoo employees'))
         return super().prop(name)
 
     def _item(self, employee):
